@@ -152,8 +152,9 @@ function AnalyzePage() {
                     <ul className="space-y-1">
                       {results.urgencySignals.map(signal => (
                         <li key={signal.label}>
-                          <span className="font-semibold">+{signal.points}</span> {signal.label}{' '}
-                          <span className="text-gray-500">("{signal.match}")</span>
+                          {signal.points != null && <span className="font-semibold">+{signal.points} </span>}
+                          {signal.label}
+                          {signal.match && <span className="text-gray-500"> ("{signal.match}")</span>}
                         </li>
                       ))}
                     </ul>
