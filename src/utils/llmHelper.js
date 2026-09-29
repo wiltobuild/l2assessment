@@ -31,6 +31,7 @@ export const CATEGORIES = [
 ];
 
 const CONFIDENCE_LEVELS = ["high", "medium", "low"];
+const URGENCY_LEVELS = ["High", "Medium", "Low"];
 
 const SYSTEM_PROMPT = `You triage customer support messages for a SaaS company.
 Pick exactly one category for the customer message:
@@ -47,6 +48,16 @@ If a message covers several topics, choose the one the support team must act on 
 (e.g. a failed payment that blocks product access is a Billing Issue). Politeness or
 thanks inside a request does not make it Feedback.
 
+urgency, judged by business impact, never by tone, punctuation or length:
+- High: broad or severe impact: the whole product, or a workflow the business depends on
+  (orders, checkout, logins for the team), is down or unusable; data is lost or at risk; a
+  security incident; many customers are being charged or billed wrongly; or a hard deadline
+  within hours.
+- Medium: one feature is broken or misbehaving while the rest works; one user can't get into
+  their account; a single wrong charge, billing dispute or refund; or a frustrated follow-up.
+  Being annoying or inconvenient alone does not make an issue High.
+- Low: questions, feature requests and feedback with nothing broken.
+
 confidence: "high" if the category is clear, "medium" if another category was plausible,
 "low" if you are guessing.
 reasoning: one or two sentences for the support agent explaining the choice.
@@ -58,9 +69,10 @@ const RESPONSE_SCHEMA = {
   properties: {
     category: { type: "string", enum: CATEGORIES },
     confidence: { type: "string", enum: CONFIDENCE_LEVELS },
+    urgency: { type: "string", enum: URGENCY_LEVELS },
     reasoning: { type: "string" },
   },
-  required: ["category", "confidence", "reasoning"],
+  required: ["category", "confidence", "urgency", "reasoning"],
   additionalProperties: false,
 };
 
@@ -68,7 +80,7 @@ const RESPONSE_SCHEMA = {
  * Categorize a customer support message using Groq AI
  *
  * @param {string} message - The customer support message
- * @returns {Promise<{category: string, confidence: string, reasoning: string, source: 'ai'|'fallback'}>}
+ * @returns {Promise<{category: string, confidence: string, urgency?: string, reasoning: string, source: 'ai'|'rules'}>}
  */
 export async function categorizeMessage(message) {
   if (!groq) {
@@ -92,14 +104,14 @@ export async function categorizeMessage(message) {
 
     return { ...parseCategorization(response.choices[0].message.content), source: "ai" };
   } catch (error) {
-    console.warn('Groq API failed, using mock response:', error.message);
+    console.warn('Groq API failed, using rule-based categorization:', error.message);
     return categorizeWithRules(message);
   }
 }
 
 /**
  * Validate the model's JSON so a malformed or off-list answer falls back to
- * the mock instead of reaching the UI.
+ * the rules instead of reaching the UI.
  */
 export function parseCategorization(content) {
   const parsed = JSON.parse(content);
@@ -109,12 +121,16 @@ export function parseCategorization(content) {
   if (!CONFIDENCE_LEVELS.includes(parsed.confidence)) {
     throw new Error(`Unexpected confidence: ${parsed.confidence}`);
   }
+  if (!URGENCY_LEVELS.includes(parsed.urgency)) {
+    throw new Error(`Unexpected urgency: ${parsed.urgency}`);
+  }
   if (typeof parsed.reasoning !== "string" || !parsed.reasoning.trim()) {
     throw new Error("Missing reasoning");
   }
   return {
     category: parsed.category,
     confidence: parsed.confidence,
+    urgency: parsed.urgency,
     reasoning: parsed.reasoning.trim(),
   };
 }

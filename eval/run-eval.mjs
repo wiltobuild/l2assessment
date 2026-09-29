@@ -3,6 +3,7 @@
  *
  *   npm run eval              # all case sets
  *   npm run eval -- --verbose # also list every miss
+ *   npm run eval -- --llm     # use the Groq LLM for categories (needs VITE_GROQ_API_KEY)
  *
  * Case sets:
  *   dev-cases.json      - regression set; the rules are tuned against it
@@ -17,12 +18,25 @@ import { readFileSync, existsSync } from 'node:fs'
 import { createServer } from 'vite'
 
 const verbose = process.argv.includes('--verbose')
+const useLlm = process.argv.includes('--llm')
+// Stay under Groq's free-tier requests-per-minute limit
+const LLM_DELAY_MS = 2500
 const SETS = ['dev', 'holdout', 'holdout2']
 const GATED_SET = 'dev'
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' })
-const { triageWithRules } = await server.ssrLoadModule('/src/utils/triage.js')
-await server.close()
+const { triageWithRules, triageMessage } = await server.ssrLoadModule('/src/utils/triage.js')
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+let fallbacks = 0
+const triage = async message => {
+  if (!useLlm) return triageWithRules(message)
+  await sleep(LLM_DELAY_MS)
+  const result = await triageMessage(message)
+  if (result.categorySource !== 'ai') fallbacks++
+  return result
+}
+console.log(useLlm ? 'Mode: LLM + rules (higher urgency wins)' : 'Mode: rules only')
 
 const pct = (n, d) => (d === 0 ? 'n/a' : `${Math.round((100 * n) / d)}%`)
 let gatedFailures = 0
@@ -37,7 +51,7 @@ for (const name of SETS) {
   const misses = []
 
   for (const c of cases) {
-    const t = triageWithRules(c.message)
+    const t = await triage(c.message)
     if (t.category === c.category) catOk++
     if (t.urgency === c.urgency) urgOk++
     if (t.needsReview) reviewed++
@@ -63,6 +77,9 @@ for (const name of SETS) {
   console.log(`  Sent to human review:  ${pct(reviewed, cases.length)} (${reviewed}/${cases.length})`)
   if (verbose && misses.length) console.log(misses.join('\n'))
 }
+
+await server.close()
+if (useLlm) console.log(`\nLLM calls that fell back to rules: ${fallbacks}`)
 
 if (gatedFailures > 0) {
   console.error(`\nFAIL: ${gatedFailures} emergency message(s) in the ${GATED_SET} set were buried`)

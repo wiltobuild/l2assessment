@@ -18,7 +18,7 @@ export const PRIORITY_RANK = { High: 0, Review: 1, Medium: 2, Low: 3 }
  */
 export function buildTriage(message, categorization) {
   const { category, confidence, reasoning, source } = categorization
-  const urgency = scoreUrgency(message)
+  const urgency = combineUrgency(scoreUrgency(message), categorization.urgency)
   const escalate = needsEscalation(urgency)
   const needsReview = urgency.level !== 'High' && (category === 'Unknown' || confidence === 'low')
 
@@ -37,6 +37,21 @@ export function buildTriage(message, categorization) {
       ? 'Needs human review: the category is unclear. Read the message and set category and urgency by hand.'
       : getRecommendedAction(category, urgency.level),
     reasoning,
+  }
+}
+
+const LEVELS = ['Low', 'Medium', 'High']
+
+/**
+ * The higher of the rule-based and AI urgency wins: rules catch known
+ * emergency phrasing reliably, the AI catches emergencies in new wording.
+ */
+function combineUrgency(rules, aiLevel) {
+  if (!aiLevel || LEVELS.indexOf(aiLevel) <= LEVELS.indexOf(rules.level)) return rules
+  return {
+    ...rules,
+    level: aiLevel,
+    signals: [...rules.signals, { label: `AI assessed urgency as ${aiLevel}`, points: null, match: null }],
   }
 }
 

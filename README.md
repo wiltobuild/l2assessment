@@ -86,6 +86,14 @@ This runs the full rule-based pipeline over the labeled sets in `eval/` and repo
 | `holdout` (23) | Written before tuning, but results were seen during tuning | 96% | 100% | 0 / 5 | 17% |
 | `holdout2` (20) | Written after tuning, never tuned against: **the honest estimate** | 30% | 55% | 1 / 4 | 85% |
 
+With a Groq key, `npm run eval -- --llm` runs the same sets through the live model. The model returns category and urgency, and the higher of the model's and the rules' urgency wins:
+
+| Set | Category | Urgency | Emergencies buried | High precision | Sent to review |
+|---|---|---|---|---|---|
+| `dev` | 95% | 98% | 0 / 13 | 93% | 7% |
+| `holdout` | 100% | 96% | 0 / 5 | 83% | 9% |
+| `holdout2` | 80% | 90% | 0 / 4 | 80% | 10% |
+
 Keyword rules do well on phrasing they were built around and poorly on new phrasing. The review flag is what keeps unfamiliar messages from being silently marked Low. To improve the rules, add the agent reviews you export to a new case file, and keep one set you never tune against.
 
 
