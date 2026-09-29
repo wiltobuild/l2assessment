@@ -26,8 +26,8 @@ Support teams waste time manually reading and triaging customer messages. This t
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd "L2 assessment"
+   git clone https://github.com/wiltobuild/l2assessment.git
+   cd l2assessment
    ```
 
 2. **Install dependencies**
@@ -64,8 +64,8 @@ Support teams waste time manually reading and triaging customer messages. This t
 2. **Analyze**: Click "Analyze Message" to process the input
 3. **Classification**: The app runs three processes in parallel:
    - **Category Classification** (LLM): Uses Groq AI (Llama 3.3 70B) to categorize the message
-   - **Urgency Scoring** (Rule-based): Applies simple rules to determine urgency
-   - **Recommendation** (Template-based): Maps category to a recommended action
+   - **Urgency Scoring** (Rule-based): Scores what the message says, not how it's written: outages, blocked customers, data/security risk, incorrect charges, time pressure, and churn/legal risk each add points (see `src/utils/urgencyScorer.js`). Length, punctuation, caps, politeness, and time of day are ignored. The matched signals are shown with the result, and data/security or churn signals flag the message for escalation.
+   - **Recommendation** (Template-based): Maps category (and High urgency) to a recommended action and owning team
 4. **Display Results**: Shows category, urgency tag, recommended action, and AI reasoning
 5. **History**: All analyses are saved to localStorage and viewable in the History tab
 
