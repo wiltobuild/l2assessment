@@ -29,7 +29,7 @@ function AnalyzePage() {
     
     try {
       // Run categorization (LLM call)
-      const { category, reasoning } = await categorizeMessage(message)
+      const { category, confidence, reasoning, source } = await categorizeMessage(message)
       
       // Calculate urgency (rule-based)
       const urgencyResult = scoreUrgency(message)
@@ -41,6 +41,8 @@ function AnalyzePage() {
       const analysisResult = {
         message,
         category,
+        confidence,
+        categorySource: source,
         urgency,
         urgencyScore: urgencyResult.score,
         urgencySignals: urgencyResult.signals,
@@ -139,6 +141,10 @@ function AnalyzePage() {
                 <div className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold">
                   {results.category}
                 </div>
+                <span className={`ml-2 text-sm ${results.confidence === 'high' ? 'text-gray-600' : 'text-amber-700 font-semibold'}`}>
+                  {results.confidence} confidence
+                  {results.categorySource === 'fallback' && ' · keyword fallback, AI unavailable'}
+                </span>
               </div>
 
               <div>
@@ -193,7 +199,7 @@ function AnalyzePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
-                  const text = `Category: ${results.category}\nUrgency: ${results.urgency}${results.escalate ? ' (escalate)' : ''}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
+                  const text = `Category: ${results.category} (${results.confidence} confidence)\nUrgency: ${results.urgency}${results.escalate ? ' (escalate)' : ''}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
                   navigator.clipboard.writeText(text)
                   alert('Results copied to clipboard!')
                 }}

@@ -11,7 +11,7 @@ Support teams waste time manually reading and triaging customer messages. This t
 ## Tech Stack
 
 - **Frontend**: React + Vite + Tailwind CSS
-- **AI**: Groq API (Llama 3.3 70B - Free tier)
+- **AI**: Groq API (GPT-OSS 20B with strict JSON-schema output - Free tier)
 - **Runtime**: Browser-based (local development only)
 
 ## Setup Instructions
@@ -63,7 +63,7 @@ Support teams waste time manually reading and triaging customer messages. This t
 1. **Paste Message**: User pastes a customer support message into the text area
 2. **Analyze**: Click "Analyze Message" to process the input
 3. **Classification**: The app runs three processes in parallel:
-   - **Category Classification** (LLM): Uses Groq AI (Llama 3.3 70B) to categorize the message
+   - **Category Classification** (LLM): Groq returns JSON that must match a schema: one of a fixed list of categories (Technical Problem, Account Access, Billing Issue, Feature Request, General Inquiry, Feedback, Unknown), a confidence level, and a short reason. The response is validated; if the API is unavailable or the answer is invalid, a keyword fallback is used and labeled as such.
    - **Urgency Scoring** (Rule-based): Scores what the message says, not how it's written: outages, blocked customers, data/security risk, incorrect charges, time pressure, and churn/legal risk each add points (see `src/utils/urgencyScorer.js`). Length, punctuation, caps, politeness, and time of day are ignored. The matched signals are shown with the result, and data/security or churn signals flag the message for escalation.
    - **Recommendation** (Template-based): Maps category (and High urgency) to a recommended action and owning team
 4. **Display Results**: Shows category, urgency tag, recommended action, and AI reasoning
@@ -113,7 +113,7 @@ The dashboard won't load when I try to access it. I've tried refreshing but it k
 - ✅ **Completely Free** - No credit card required
 - ✅ **Fast Inference** - Groq's LPU technology is incredibly fast
 - ✅ **Generous Limits** - ~14,400 requests/day on free tier
-- ✅ **High Quality** - Llama 3.3 70B performs excellently
+- ✅ **Structured Outputs** - GPT-OSS models support strict JSON-schema responses
 - ✅ **Easy Signup** - Get started in minutes at https://console.groq.com
 
 ## License
