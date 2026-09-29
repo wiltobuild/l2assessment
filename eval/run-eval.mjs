@@ -3,7 +3,7 @@
  *
  *   npm run eval              # all case sets
  *   npm run eval -- --verbose # also list every miss
- *   npm run eval -- --llm     # use the Groq LLM for categories (needs VITE_GROQ_API_KEY)
+ *   npm run eval -- --llm     # use the Groq LLM too (needs GROQ_API_KEY in .env.local)
  *
  * Case sets:
  *   dev-cases.json      - regression set; the rules are tuned against it
@@ -15,7 +15,8 @@
  * set buries any; holdout results are reported but don't fail the run.
  */
 import { readFileSync, existsSync } from 'node:fs'
-import { createServer } from 'vite'
+import { createServer, loadEnv } from 'vite'
+import { createGroqClassifier } from '../server/groqClassifier.js'
 
 const verbose = process.argv.includes('--verbose')
 const useLlm = process.argv.includes('--llm')
@@ -25,16 +26,27 @@ const SETS = ['dev', 'holdout', 'holdout2']
 const GATED_SET = 'dev'
 
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' })
-const { triageWithRules, triageMessage } = await server.ssrLoadModule('/src/utils/triage.js')
+const { triageWithRules, buildTriage } = await server.ssrLoadModule('/src/utils/triage.js')
+
+const env = loadEnv('development', process.cwd(), '')
+if (useLlm && !env.GROQ_API_KEY) {
+  console.error('--llm needs GROQ_API_KEY in .env.local')
+  process.exit(1)
+}
+const classify = useLlm ? createGroqClassifier({ apiKey: env.GROQ_API_KEY, model: env.GROQ_MODEL }) : null
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 let fallbacks = 0
 const triage = async message => {
   if (!useLlm) return triageWithRules(message)
   await sleep(LLM_DELAY_MS)
-  const result = await triageMessage(message)
-  if (result.categorySource !== 'ai') fallbacks++
-  return result
+  try {
+    return buildTriage(message, await classify(message))
+  } catch (error) {
+    console.warn('LLM call failed, using rules:', error.message)
+    fallbacks++
+    return triageWithRules(message)
+  }
 }
 console.log(useLlm ? 'Mode: LLM + rules (higher urgency wins)' : 'Mode: rules only')
 

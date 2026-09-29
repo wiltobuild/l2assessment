@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "eval": "node eval/run-eval.mjs"
+    "eval": "node eval/run-eval.mjs",
+    "start": "node --env-file-if-exists=.env.local server/index.js"
   },
   "dependencies": {
     "groq-sdk": "^0.37.0",
