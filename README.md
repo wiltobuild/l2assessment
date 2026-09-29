@@ -63,11 +63,30 @@ Support teams waste time manually reading and triaging customer messages. This t
 1. **Paste Message**: User pastes a customer support message into the text area
 2. **Analyze**: Click "Analyze Message" to process the input
 3. **Classification**: The app runs three processes in parallel:
-   - **Category Classification** (LLM): Groq returns JSON that must match a schema: one of a fixed list of categories (Technical Problem, Account Access, Billing Issue, Feature Request, General Inquiry, Feedback, Unknown), a confidence level, and a short reason. The response is validated; if the API is unavailable or the answer is invalid, a keyword fallback is used and labeled as such.
+   - **Category Classification**: With a Groq key, the LLM returns JSON that must match a schema: one of a fixed list of categories (Technical Problem, Account Access, Billing Issue, Feature Request, General Inquiry, Feedback, Unknown), a confidence level, and a short reason. The response is validated. Without a key, or if the call fails, a rule-based classifier (`src/utils/ruleClassifier.js`) scores every category from weighted cues and derives confidence from how far the winner leads.
    - **Urgency Scoring** (Rule-based): Scores what the message says, not how it's written: outages, blocked customers, data/security risk, incorrect charges, time pressure, and churn/legal risk each add points (see `src/utils/urgencyScorer.js`). Length, punctuation, caps, politeness, and time of day are ignored. The matched signals are shown with the result, and data/security or churn signals flag the message for escalation.
    - **Recommendation** (Template-based): Maps category (and High urgency) to a recommended action and owning team
-4. **Display Results**: Shows category, urgency tag, recommended action, and AI reasoning
-5. **History**: All analyses are saved to localStorage and viewable in the History tab
+   - **Needs review**: If the category is Unknown or low-confidence (and urgency isn't already High), the message is flagged for human review instead of defaulting to Low. An emergency in unfamiliar wording goes near the top of the queue instead of the bottom.
+4. **Display Results**: Shows category and confidence, urgency with the signals behind it, escalation/review flags, recommended action, and reasoning
+5. **Triage Queue** (History tab): Sorted by priority (High, Needs review, Medium, Low; escalated first within a level). Agents can confirm or correct each triage, and export their reviews as `labeled-cases.json` in the eval format.
+
+## Evaluating the triage rules
+
+No API key is needed:
+
+```bash
+npm run eval -- --verbose
+```
+
+This runs the full rule-based pipeline over the labeled sets in `eval/` and reports category accuracy, urgency accuracy, High precision, review rate, and **buried emergencies** (expected-High messages neither marked High nor sent to review). It fails if the dev set buries any emergency.
+
+| Set | Purpose | Category | Urgency | Emergencies buried | Sent to review |
+|---|---|---|---|---|---|
+| `dev` (43) | Rules are tuned against it | 100% | 100% | 0 / 13 | 14% |
+| `holdout` (23) | Written before tuning, but results were seen during tuning | 96% | 100% | 0 / 5 | 17% |
+| `holdout2` (20) | Written after tuning, never tuned against: **the honest estimate** | 30% | 55% | 1 / 4 | 85% |
+
+Keyword rules do well on phrasing they were built around and poorly on new phrasing. The review flag is what keeps unfamiliar messages from being silently marked Low. To improve the rules, add the agent reviews you export to a new case file, and keep one set you never tune against.
 
 
 ## Example Test Messages
