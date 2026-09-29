@@ -36,7 +36,7 @@ Once logged in:
 3. Add your key:
 
 ```
-VITE_GROQ_API_KEY=gsk_your-actual-key-here
+GROQ_API_KEY=gsk_your-actual-key-here
 ```
 
 4. Save the file

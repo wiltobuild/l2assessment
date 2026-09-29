@@ -12,7 +12,7 @@ Support teams waste time manually reading and triaging customer messages. This t
 
 - **Frontend**: React + Vite + Tailwind CSS
 - **AI**: Groq API (GPT-OSS 20B with strict JSON-schema output - Free tier)
-- **Runtime**: Browser-based (local development only)
+- **Runtime**: React app plus a small Node API (`server/`) that holds the Groq key and calls Groq server-side
 
 ## Setup Instructions
 
@@ -44,7 +44,7 @@ Support teams waste time manually reading and triaging customer messages. This t
    
    Edit `.env.local` and add your Groq API key:
    ```
-   VITE_GROQ_API_KEY=gsk_your-actual-key-here
+   GROQ_API_KEY=gsk_your-actual-key-here
    ```
    
    Get your FREE API key from: https://console.groq.com/keys
@@ -133,7 +133,21 @@ The dashboard won't load when I try to access it. I've tried refreshing but it k
 
 ## Security Note
 
-⚠️ **Warning**: This application exposes the Groq API key in the browser (using `dangerouslyAllowBrowser: true`). This is acceptable for local development only but should **NEVER** be done in production. In a real application, API calls should be made from a secure backend server.
+The Groq API key never reaches the browser. The app calls its own `POST /api/categorize` endpoint (`server/categorizeHandler.js`), which reads `GROQ_API_KEY` on the server and calls Groq. Because the variable has no `VITE_` prefix, Vite never puts it in the bundle. The endpoint:
+
+- accepts only `POST` with a JSON `{ "message": "..." }` of at most 5,000 characters (16 KB body)
+- rate-limits each client to 30 requests per minute, so the key can't be drained through the endpoint
+- returns only the validated classification, never Groq error details
+- returns `503` when no key is configured; the app then uses the rule-based classifier
+
+The same handler runs in `npm run dev`, `npm run preview`, and the production server:
+
+```bash
+npm run build
+npm start        # http://localhost:3000, reads GROQ_API_KEY from the environment or .env.local
+```
+
+For a real deployment, also put the app behind your authentication so only your team can call the endpoint.
 
 ## Why Groq?
 
