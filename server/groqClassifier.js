@@ -12,8 +12,12 @@ export const DEFAULT_MODEL = 'openai/gpt-oss-20b'
 const SYSTEM_PROMPT = `You triage customer support messages for a SaaS company.
 Pick exactly one category for the customer message:
 
-- Technical Problem: something in the product is broken, erroring, slow or down.
-- Account Access: the customer can't log in, is locked out, needs a password/2FA reset, or suspects their account was compromised.
+- Technical Problem: something in the product is broken, erroring, slow or down. This includes
+  session bugs where the customer can get in but the product misbehaves, such as being logged
+  out unexpectedly or sessions expiring too quickly.
+- Account Access: the customer can't get into their account at all (can't log in, locked out,
+  disabled account), needs a password/2FA reset or user access changed, or suspects their
+  account was compromised.
 - Billing Issue: charges, payments, invoices, refunds, plan changes or cancellations.
 - Feature Request: asks for new functionality or an improvement to existing functionality.
 - General Inquiry: a question about the product, company or policies with no problem to fix.
@@ -27,11 +31,13 @@ thanks inside a request does not make it Feedback.
 urgency, judged by business impact, never by tone, punctuation or length:
 - High: broad or severe impact: the whole product, or a workflow the business depends on
   (orders, checkout, logins for the team), is down or unusable; data is lost or at risk; a
-  security incident; many customers are being charged or billed wrongly; or a hard deadline
-  within hours.
+  security incident; the customer's own customers are being charged or billed wrongly; a
+  failed payment has cut off service; or a hard deadline within hours.
 - Medium: one feature is broken or misbehaving while the rest works; one user can't get into
-  their account; a single wrong charge, billing dispute or refund; or a frustrated follow-up.
-  Being annoying or inconvenient alone does not make an issue High.
+  their account; or a frustrated follow-up. Also Medium: a wrong charge on the customer's own
+  bill (duplicate charge, overcharge, billed after cancelling) or a refund request, because it
+  affects one account and can be reversed with a refund. Being annoying or inconvenient alone
+  does not make an issue High.
 - Low: questions, feature requests and feedback with nothing broken.
 
 confidence: "high" if the category is clear, "medium" if another category was plausible,
