@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { categorizeMessage } from '../utils/llmHelper'
-import { scoreUrgency, needsEscalation } from '../utils/urgencyScorer'
-import { getRecommendedAction } from '../utils/templates'
+import { triageMessage } from '../utils/triage'
 
 function AnalyzePage() {
   const [message, setMessage] = useState('')
@@ -28,27 +26,8 @@ function AnalyzePage() {
     setResults(null)
     
     try {
-      // Run categorization (LLM call)
-      const { category, confidence, reasoning, source } = await categorizeMessage(message)
-      
-      // Calculate urgency (rule-based)
-      const urgencyResult = scoreUrgency(message)
-      const urgency = urgencyResult.level
-
-      // Get recommended action (template-based)
-      const recommendedAction = getRecommendedAction(category, urgency)
-
       const analysisResult = {
-        message,
-        category,
-        confidence,
-        categorySource: source,
-        urgency,
-        urgencyScore: urgencyResult.score,
-        urgencySignals: urgencyResult.signals,
-        escalate: needsEscalation(urgencyResult),
-        recommendedAction,
-        reasoning,
+        ...(await triageMessage(message)),
         timestamp: new Date().toISOString()
       }
 
@@ -143,7 +122,7 @@ function AnalyzePage() {
                 </div>
                 <span className={`ml-2 text-sm ${results.confidence === 'high' ? 'text-gray-600' : 'text-amber-700 font-semibold'}`}>
                   {results.confidence} confidence
-                  {results.categorySource === 'fallback' && ' · keyword fallback, AI unavailable'}
+                  {results.categorySource === 'rules' && ' · rule-based (no AI key)'}
                 </span>
               </div>
 
@@ -159,6 +138,11 @@ function AnalyzePage() {
                 {results.escalate && (
                   <div className="inline-block ml-2 bg-red-600 text-white px-3 py-2 rounded-lg font-semibold text-sm">
                     Escalate
+                  </div>
+                )}
+                {results.needsReview && (
+                  <div className="inline-block ml-2 bg-amber-500 text-white px-3 py-2 rounded-lg font-semibold text-sm">
+                    Needs review
                   </div>
                 )}
                 <div className="text-sm text-gray-600 mt-2">
@@ -199,7 +183,7 @@ function AnalyzePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
-                  const text = `Category: ${results.category} (${results.confidence} confidence)\nUrgency: ${results.urgency}${results.escalate ? ' (escalate)' : ''}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
+                  const text = `Category: ${results.category} (${results.confidence} confidence)\nUrgency: ${results.urgency}${results.escalate ? ' (escalate)' : ''}${results.needsReview ? ' (needs review)' : ''}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
                   navigator.clipboard.writeText(text)
                   alert('Results copied to clipboard!')
                 }}

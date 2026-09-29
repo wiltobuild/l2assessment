@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { classifyWithRules } from './ruleClassifier';
 
 /**
  * LLM Helper for categorizing customer support messages
@@ -71,7 +72,7 @@ const RESPONSE_SCHEMA = {
  */
 export async function categorizeMessage(message) {
   if (!groq) {
-    return getMockCategorization(message);
+    return categorizeWithRules(message);
   }
 
   try {
@@ -92,7 +93,7 @@ export async function categorizeMessage(message) {
     return { ...parseCategorization(response.choices[0].message.content), source: "ai" };
   } catch (error) {
     console.warn('Groq API failed, using mock response:', error.message);
-    return getMockCategorization(message);
+    return categorizeWithRules(message);
   }
 }
 
@@ -118,41 +119,11 @@ export function parseCategorization(content) {
   };
 }
 
-// Keyword rules for the fallback, checked in order; the first match wins.
-// Word boundaries keep e.g. "download" from matching "down".
-const FALLBACK_RULES = [
-  ["Account Access",
-    /\b(locked out|can'?t (log ?in|sign ?in|login)|cannot (log ?in|sign ?in|login)|password|2fa|two.factor|hacked|compromised)\b/i,
-    "Mentions login, password or account security problems."],
-  ["Billing Issue",
-    /\b(bill(ing|ed)?|payments?|charged?|charges|invoices?|credit card|subscription|refund|plan|pricing|cancel(l?ing)?)\b/i,
-    "Mentions payments, charges, invoices or the customer's plan."],
-  ["Technical Problem",
-    /\b(bug|errors?|broken|not working|crash(ed|es|ing)?|down|outage|server|database|connection lost|not loading|won'?t load|timing out|slow|fail(ed|s|ing)?)\b/i,
-    "Describes something in the product that is broken, failing or slow."],
-  ["Feature Request",
-    /\b(feature|could you add|please add|would like to see|would be (great|nice|useful)|suggestion|wish|enhancement|support for)\b/i,
-    "Asks for new functionality or an improvement."],
-  ["Feedback",
-    /\b(thanks?|thank you|appreciate|love|great|awesome|amazing|nice design|positive feedback)\b/i,
-    "Expresses thanks or an opinion without a request to act on."],
-  ["General Inquiry",
-    /(\?|\b(how|what|when|where|can i|is there|do you)\b)/i,
-    "Asks a question without describing a problem."],
-];
-
 /**
- * Keyword-based categorization for when the API is unavailable.
- * Marked low-confidence so agents know to double-check it.
+ * Rule-based categorization, used when no API key is configured or the API
+ * call fails.
  */
-function getMockCategorization(message) {
-  const match = FALLBACK_RULES.find(([, regex]) => regex.test(message));
-  const [category, , reason] = match || ["Unknown", null, "No recognizable keywords; needs manual review."];
-
-  return {
-    category,
-    confidence: "low",
-    reasoning: `Keyword fallback (AI unavailable): ${reason}`,
-    source: "fallback",
-  };
+export function categorizeWithRules(message) {
+  const { category, confidence, reasoning } = classifyWithRules(message);
+  return { category, confidence, reasoning, source: "rules" };
 }
