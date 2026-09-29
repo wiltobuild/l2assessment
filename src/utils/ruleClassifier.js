@@ -32,6 +32,7 @@ const CATEGORY_CUES = {
     ['bugs?|errors?|crash\\w*|broken|glitch\\w*|5\\d\\d', 2],
     ["not working|(doesn'?t|does not|isn'?t|won'?t) (work|load|open|save)|does nothing|stopped (working|arriving|syncing|sending|loading)", 2],
     ['not loading|keeps loading|loading forever|timing out|times out|spins|spinning|freez\\w*|stuck', 2],
+    ['(signs?|signing|logs?|logging|kicks?|kicking) (me|us|users|people) out|session (times out|expires|expired)', 2.5],
     ['lost (all )?(of )?(our |my |the )?(data|files|records|orders|work)|data loss|connection lost', 3],
     ['slow|lag\\w*', 2],
     ['out of date|never (arrives|arrived)|sync\\w*|fail\\w*', 1],

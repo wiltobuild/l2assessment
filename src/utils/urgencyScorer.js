@@ -16,7 +16,7 @@ const SIGNAL_RULES = [
   // Service is unavailable or data is at risk
   ['Outage or service down', 50, [
     'down', 'outage', 'offline', 'unreachable', 'connection lost', 'lost connection',
-    'not loading', "won'?t load", 'timing out', 'times out', '5\\d\\d( errors?)?', 'every request',
+    'not loading', "won'?t load", '(?<!session )(timing|times) out', '5\\d\\d( errors?)?', 'every request',
     '(site|app|api|server|service|website|system) (is |was )?unavailable',
   ]],
   ['Customers or team blocked', 50, [
@@ -26,6 +26,9 @@ const SIGNAL_RULES = [
     'account (is |was |has been |got )?(disabled|suspended|locked|deactivated)',
     'service (is |was |has been |got )?(suspended|cut off|disabled)',
   ]],
+  ['Many customers affected', 30, [
+    "(every ?one of|all( of)?) (our|my|the) (customers|users|clients|staff) (were|are|was|is|got|have been|can'?t|cannot)",
+  ]],
   ['Data loss or security risk', 55, [
     'data loss', 'lost (all )?(of )?(our |my |the )?(data|files|records|orders|work|customers)',
     '(was|were|got|been|all|everything) (deleted|wiped|erased)', 'missing data',
@@ -33,8 +36,9 @@ const SIGNAL_RULES = [
     'suspicious (login|activity)', 'security (issue|incident|hole|problem)', 'leak(ed)?', 'phishing',
     'lock (the|my|our) account',
   ]],
+  // One account's money: Medium on its own, and fixable with a refund
   ['Money taken incorrectly', 40, [
-    'charged twice', 'double charg(ed|e)', 'overcharg(ed|e)', 'wrong amount', 'payment failed',
+    'charged (twice|double)', 'double charg(ed|e)', '(billed|charged) (\\$?\\d+ )?(more|extra)', 'overcharg(ed|e)', 'wrong amount', 'payment failed', 'refund',
     '(card )?(was )?declined', 'fraud', 'why (was|am|were) (i|we) charged',
     'charged \\$?\\d+ (when|but|instead)',
   ]],
@@ -49,7 +53,7 @@ const SIGNAL_RULES = [
 
   // Churn and escalation risk
   ['Churn or legal risk', 35, [
-    'cancel', 'cancell?ing', 'refund', 'chargeback', 'switch(ing)? providers?', 'competitor',
+    'cancel', 'cancell?ing', 'chargeback', 'switch(ing)? providers?', 'competitor',
     'lawyer', 'legal', 'sue', 'unacceptable', 'fed up', '(second|third|fourth) time',
     'again and again', 'still (not|broken)',
   ]],
@@ -59,7 +63,8 @@ const SIGNAL_RULES = [
     'bugs?', 'errors?', 'broken', 'not working', "(doesn'?t|does not|isn'?t|won'?t) (work|open|save)",
     'does nothing', 'stopped (working|arriving|syncing|sending|loading)', 'crash(ed|es|ing)?',
     'fail(ed|s|ing|ure)?', 'slow', 'stuck', 'freez(e|es|ing)', 'never (arrives|arrived|loads)',
-    'keeps loading', 'loading forever', 'spins', 'spinning', 'out of date', 'glitch(es|y)?',
+    'keeps loading', 'loading forever', '(signs?|signing|logs?|logging|kicks?|kicking) (me|us|users|people) out',
+    'session (times out|expires|expired)', 'spins', 'spinning', 'out of date', 'glitch(es|y)?',
   ]],
 
   // A single user who can't get into their account
