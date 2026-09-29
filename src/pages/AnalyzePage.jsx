@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { categorizeMessage } from '../utils/llmHelper'
-import { calculateUrgency } from '../utils/urgencyScorer'
+import { scoreUrgency, needsEscalation } from '../utils/urgencyScorer'
 import { getRecommendedAction } from '../utils/templates'
 
 function AnalyzePage() {
@@ -32,15 +32,19 @@ function AnalyzePage() {
       const { category, reasoning } = await categorizeMessage(message)
       
       // Calculate urgency (rule-based)
-      const urgency = calculateUrgency(message)
-      
+      const urgencyResult = scoreUrgency(message)
+      const urgency = urgencyResult.level
+
       // Get recommended action (template-based)
-      const recommendedAction = getRecommendedAction(category)
-      
+      const recommendedAction = getRecommendedAction(category, urgency)
+
       const analysisResult = {
         message,
         category,
         urgency,
+        urgencyScore: urgencyResult.score,
+        urgencySignals: urgencyResult.signals,
+        escalate: needsEscalation(urgencyResult),
         recommendedAction,
         reasoning,
         timestamp: new Date().toISOString()
@@ -146,6 +150,25 @@ function AnalyzePage() {
                 }`}>
                   {results.urgency}
                 </div>
+                {results.escalate && (
+                  <div className="inline-block ml-2 bg-red-600 text-white px-3 py-2 rounded-lg font-semibold text-sm">
+                    Escalate
+                  </div>
+                )}
+                <div className="text-sm text-gray-600 mt-2">
+                  {results.urgencySignals.length === 0 ? (
+                    'No impact, deadline or churn signals detected.'
+                  ) : (
+                    <ul className="space-y-1">
+                      {results.urgencySignals.map(signal => (
+                        <li key={signal.label}>
+                          <span className="font-semibold">+{signal.points}</span> {signal.label}{' '}
+                          <span className="text-gray-500">("{signal.match}")</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -170,7 +193,7 @@ function AnalyzePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
-                  const text = `Category: ${results.category}\nUrgency: ${results.urgency}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
+                  const text = `Category: ${results.category}\nUrgency: ${results.urgency}${results.escalate ? ' (escalate)' : ''}\nRecommendation: ${results.recommendedAction}\n\nReasoning: ${results.reasoning}`
                   navigator.clipboard.writeText(text)
                   alert('Results copied to clipboard!')
                 }}
