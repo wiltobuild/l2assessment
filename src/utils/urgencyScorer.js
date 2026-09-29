@@ -16,26 +16,34 @@ const SIGNAL_RULES = [
   // Service is unavailable or data is at risk
   ['Outage or service down', 50, [
     'down', 'outage', 'offline', 'unreachable', 'connection lost', 'lost connection',
-    'not loading', "won't load", 'wont load', 'timing out', 'times out', '5\\d\\d error',
+    'not loading', "won'?t load", 'timing out', 'times out', '5\\d\\d( errors?)?', 'every request',
+    '(site|app|api|server|service|website|system) (is |was )?unavailable',
   ]],
-  ['Customers or team blocked', 45, [
-    "can'?t (log ?in|sign ?in|access|login)", 'cannot (log ?in|sign ?in|access|login)',
-    'locked out', 'no access', 'unable to (log ?in|access|use)',
-    'checkout (is )?broken', "customers can'?t", 'all (of our )?users', 'whole team',
+  ['Customers or team blocked', 50, [
+    "(can'?t|cannot|unable to|not able to) (log ?in|sign ?in|login|access|use|place|process|check ?out|complete|make|pay|send|receive)",
+    'locked out', 'no access', "customers can'?t", 'checkout (is )?broken',
+    '(none of (our|my|the) (customers|users|team)|no ?one|nobody) (can|is able)',
+    'account (is |was |has been |got )?(disabled|suspended|locked|deactivated)',
+    'service (is |was |has been |got )?(suspended|cut off|disabled)',
   ]],
   ['Data loss or security risk', 55, [
-    'data loss', 'lost (all|our|my) data', 'deleted', 'missing data', 'breach', 'hacked',
-    'compromised', 'security (issue|incident|hole|problem)','leak(ed)?', 'phishing',
+    'data loss', 'lost (all )?(of )?(our |my |the )?(data|files|records|orders|work|customers)',
+    '(was|were|got|been|all|everything) (deleted|wiped|erased)', 'missing data',
+    'breach', 'hacked', 'compromised', 'without (my|our) permission', 'unauthori[sz]ed',
+    'suspicious (login|activity)', 'security (issue|incident|hole|problem)', 'leak(ed)?', 'phishing',
+    'lock (the|my|our) account',
   ]],
   ['Money taken incorrectly', 40, [
-    'charged twice', 'double charged', 'double charge', 'overcharged', 'wrong amount',
-    'payment failed', 'card declined', 'unauthori[sz]ed charge', 'fraud',
+    'charged twice', 'double charg(ed|e)', 'overcharg(ed|e)', 'wrong amount', 'payment failed',
+    '(card )?(was )?declined', 'fraud', 'why (was|am|were) (i|we) charged',
+    'charged \\$?\\d+ (when|but|instead)',
   ]],
 
   // Time pressure
   ['Time-sensitive', 25, [
     'urgent', 'urgently', 'asap', 'immediately', 'right now', 'emergency', 'critical',
     'deadline', 'in an hour', 'in \\d+ (minutes|mins|hours)', 'by (today|tonight|tomorrow)',
+    '(fixed|resolved|working|back|sorted) (by )?(today|tonight)',
     'demo', 'launch', 'go.?live',
   ]],
 
@@ -48,8 +56,15 @@ const SIGNAL_RULES = [
 
   // Ordinary product problems
   ['Something is broken', 20, [
-    'bug', 'error', 'broken', 'not working', "doesn'?t work", "isn'?t working", 'crash(ed|es|ing)?',
-    'fail(ed|s|ing)?', 'slow', 'stuck', 'freez(e|es|ing)',
+    'bugs?', 'errors?', 'broken', 'not working', "(doesn'?t|does not|isn'?t|won'?t) (work|open|save)",
+    'does nothing', 'stopped (working|arriving|syncing|sending|loading)', 'crash(ed|es|ing)?',
+    'fail(ed|s|ing|ure)?', 'slow', 'stuck', 'freez(e|es|ing)', 'never (arrives|arrived|loads)',
+    'keeps loading', 'loading forever', 'spins', 'spinning', 'out of date', 'glitch(es|y)?',
+  ]],
+
+  // A single user who can't get into their account
+  ['Account access problem', 20, [
+    'passwords?', 'reset', '2fa', 'two.factor', 'mfa', 'verification code', 'expired',
   ]],
 ]
 

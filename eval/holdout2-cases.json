@@ -1,0 +1,22 @@
+[
+  {"message": "Nothing is loading for any of our staff this morning, we're dead in the water", "category": "Technical Problem", "urgency": "High"},
+  {"message": "Invoices sent to customers show the wrong totals, they are paying incorrect amounts", "category": "Billing Issue", "urgency": "High"},
+  {"message": "The app logs me out every few minutes", "category": "Technical Problem", "urgency": "Medium"},
+  {"message": "Images aren't showing up on product pages", "category": "Technical Problem", "urgency": "Medium"},
+  {"message": "We've been hit with ransomware and your integration may be affected", "category": "Account Access", "urgency": "High"},
+  {"message": "Our orders from yesterday have vanished from the system", "category": "Technical Problem", "urgency": "High"},
+  {"message": "I keep getting a 'session expired' message after logging in", "category": "Account Access", "urgency": "Medium"},
+  {"message": "My employee left the company, how do I remove her access?", "category": "Account Access", "urgency": "Medium"},
+  {"message": "You billed us after we cancelled in January. We want our money back.", "category": "Billing Issue", "urgency": "Medium"},
+  {"message": "Do you accept PayPal?", "category": "General Inquiry", "urgency": "Low"},
+  {"message": "What does the Pro tier cost per seat?", "category": "Billing Issue", "urgency": "Low"},
+  {"message": "It would be amazing if the calendar could show a week view", "category": "Feature Request", "urgency": "Low"},
+  {"message": "Requesting bulk edit for product prices", "category": "Feature Request", "urgency": "Low"},
+  {"message": "Can we get webhooks for new orders?", "category": "Feature Request", "urgency": "Low"},
+  {"message": "Are you GDPR compliant?", "category": "General Inquiry", "urgency": "Low"},
+  {"message": "Where do I change my company logo?", "category": "General Inquiry", "urgency": "Low"},
+  {"message": "Your onboarding call was super helpful, cheers", "category": "Feedback", "urgency": "Low"},
+  {"message": "Not impressed with the latest redesign tbh", "category": "Feedback", "urgency": "Low"},
+  {"message": "ok", "category": "Unknown", "urgency": "Low"},
+  {"message": "Following up on my ticket from last week, still no answer. This is getting ridiculous.", "category": "General Inquiry", "urgency": "Medium"}
+]
